@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"xorm.io/xorm"
 )
 
@@ -21,73 +20,61 @@ func getShortUrl(ctx *gin.Context) {
 		s.WriteByte(letter[rand.IntN(len(letter))])
 	}
 
-	var body ShortUrl
+	var body ShortUrlRequest
 	err := ctx.BindJSON(&body)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid request"})
+		ctx.JSON(400, Response{Success: false, Error: "Invalid request"})
 		return
 	}
 
 	if body.Token == "" {
 		cookieToken, err := ctx.Cookie("token")
 		if err != nil {
-			ctx.JSON(400, gin.H{"error": "Failed to retrieve token cookie"})
+			ctx.JSON(400, Response{Success: false, Error: "Failed to retrieve token cookie"})
 			return
 		}
 
 		if cookieToken == "" {
-			ctx.JSON(401, gin.H{"error": "No login"})
+			ctx.JSON(401, Response{Success: false, Error: "No login"})
 			return
 		}
 
 		body.Token = cookieToken
 	}
 
-	jwtSecret := []byte("key")
-	rawToken, err := jwt.ParseWithClaims(body.Token, &userToken{}, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
-	})
+	token, err := ParseJWT(body.Token)
 
-	if err != nil || !rawToken.Valid {
-		ctx.JSON(401, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	var token *userToken
-	token, ok := rawToken.Claims.(*userToken)
-	if !ok {
-		ctx.JSON(401, gin.H{"error": "Invalid token claims"})
+	if err != nil {
+		ctx.JSON(401, Response{Success: false, Error: "Invalid token"})
 		return
 	}
 
 	if time.Now().After(token.ExpiresAt.Time) {
-		ctx.JSON(401, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	var user User
-	engine.ID(token.ID).Get(&user)
-	if !user.Valid {
-		ctx.JSON(401, gin.H{"error": "Invalid  user"})
+		ctx.JSON(401, Response{Success: false, Error: "Invalid token"})
 		return
 	}
 
 	if !checkUrl(body.Source) {
 		if !checkUrl("https://" + body.Source) {
-			ctx.JSON(400, gin.H{"error": "Invalid  source url"})
+			ctx.JSON(400, Response{Success: false, Error: "Invalid source url"})
+			return
 		}
 		body.Source = "https://" + body.Source
 	}
 
-	engine.Transaction(func(tx *xorm.Session) (interface{}, error) {
+	var user User
+	engine.ID(token.ID).Get(&user)
+	if !user.Valid {
+		ctx.JSON(401, Response{Success: false, Error: "Invalid user"})
+		return
+	}
 
-		user.LatestCreatedAt = time.Now()
-		user.LinkCount++
+	_, err = engine.Transaction(func(tx *xorm.Session) (interface{}, error) {
 
 		_, err := tx.InsertOne(&Link{
 			SourceUrl: body.Source,
 			ShortUrl:  s.String(),
-			Userid:    user.ID,
+			UserID:    user.ID,
 
 			ExpireAt: time.Now().Add(time.Hour * 24 * 7),
 		})
@@ -96,6 +83,8 @@ func getShortUrl(ctx *gin.Context) {
 			return nil, err
 		}
 
+		user.LatestCreatedAt = time.Now()
+		user.LinkCount++
 
 		_, err = tx.ID(user.ID).Cols("link_count", "latest_created_at").Update(&user)
 		if err != nil {
@@ -105,9 +94,16 @@ func getShortUrl(ctx *gin.Context) {
 
 	})
 
-	ctx.JSON(200, gin.H{
-		"success": true,
-		"url":     "localhost:8080/" + s.String(),
+	if err != nil {
+		ctx.JSON(500, Response{Success: false, Error: "Database error"})
+		return
+	}
+
+	ctx.JSON(200, ShortUrlResponse{
+		Response: Response{
+			Success: true,
+		},
+		Url: s.String(),
 	})
 
 }

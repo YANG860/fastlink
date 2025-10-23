@@ -33,6 +33,20 @@ func main() {
 		atomic.AddUint64(&totalQuery, 1)
 	})
 
+	//router group for rm user and link
+
+	removeGroup := router.Group("/remove")
+
+	removeGroup.POST("/user", func(ctx *gin.Context) {
+		removeUser(ctx)
+		atomic.AddUint64(&totalQuery, 1)
+	})
+
+	removeGroup.POST("/link", func(ctx *gin.Context) {
+		removeLink(ctx)
+		atomic.AddUint64(&totalQuery, 1)
+	})
+
 	go statQps()
 
 	router.Run()

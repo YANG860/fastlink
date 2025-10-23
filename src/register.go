@@ -8,10 +8,11 @@ import (
 )
 
 func register(ctx *gin.Context) {
-	var body loginToken
+	var body LoginRequest
 	if err := ctx.BindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		ctx.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   "Invalid request",
 		})
 		return
 	}
@@ -19,36 +20,42 @@ func register(ctx *gin.Context) {
 	has, err := engine.Where("account = ?", body.Account).Exist(&User{})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+		ctx.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   err.Error(),
 		})
 		return
 
 	}
 
-	if !has {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.PW), bcrypt.DefaultCost)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
-			return
-		}
-
-		_, err = engine.InsertOne(&User{Account: body.Account, PwHash: string(hashedPassword), Valid: true})
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"success": true,
+	if has {
+		ctx.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   "account already exists",
 		})
-
-	} else {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "phone number already exists",
-		})
+		return
 	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.PW), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   "failed to hash password",
+		})
+		return
+	}
+
+	_, err = engine.InsertOne(&User{Account: body.Account, PwHash: string(hashedPassword), Valid: true})
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Response{
+		Success: true,
+	})
 
 }

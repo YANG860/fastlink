@@ -22,12 +22,13 @@ type User struct {
 }
 
 type Link struct {
-	ID        int       `xorm:"'link_id'         pk autoincr"`
-	SourceUrl string    `xorm:"'source_url'      notnull"`
-	ShortUrl  string    `xorm:"'short_url'       index notnull unique"`
-	Userid    int       `xorm:"'user_id'         notnull"`
-	CreatedAt time.Time `xorm:"'created_at'      created"`
-	ExpireAt  time.Time `xorm:"'expire_at'       notnull"`
+	ID         int       `xorm:"'link_id'         pk autoincr"`
+	SourceUrl  string    `xorm:"'source_url'      notnull"`
+	ShortUrl   string    `xorm:"'short_url'       index notnull unique"`
+	UserID     int       `xorm:"'user_id'         notnull"`
+	ClickCount int       `xorm:"'click_count'     default(0)"`
+	CreatedAt  time.Time `xorm:"'created_at'      created"`
+	ExpireAt   time.Time `xorm:"'expire_at'       notnull"`
 }
 
 func init() {

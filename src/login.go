@@ -10,62 +10,73 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// 登录接口，校验用户信息并返回JWT token
 func login(ctx *gin.Context) {
 
-	// 解析请求体，获取手机号和密码
-	var body loginToken
+	var body LoginRequest
 	err := ctx.BindJSON(&body)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+		ctx.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   err.Error(),
 		})
 		return
 	}
 
-	// 查询数据库，查找用户信息
 	var user User
 	has, err := engine.Where("account = ?", body.Account).Get(&user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 用户不存在
-	if !has {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "incorrect account or password"})
-		return
-	}
-
-	// 校验密码（bcrypt）
-	err = bcrypt.CompareHashAndPassword([]byte(user.PwHash), []byte(body.PW))
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "incorrect account or password"})
-		return
-	}
-
-	// 生成JWT token，包含手机号和过期时间
-	
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
-	})
-
-	// 使用密钥签名token
-	secretKey := "key"
-	tokenString, err := token.SignedString([]byte(secretKey))
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to generate token",
+		ctx.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   err.Error(),
 		})
 		return
 	}
 
-	// 返回token给前端
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"token":   tokenString,
+	if !has {
+		ctx.JSON(http.StatusUnauthorized, Response{
+			Success: false,
+			Error:   "incorrect account or password",
+		})
+		return
+	}
+
+	if !user.Valid {
+		ctx.JSON(http.StatusUnauthorized, Response{
+			Success: false,
+			Error:   "user is not valid",
+		})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PwHash), []byte(body.PW))
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, Response{
+			Success: false,
+			Error:   "incorrect account or password",
+		})
+		return
+	}
+
+	tokenString, err := GenJWT(&UserToken{
+		ID: user.ID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+		}})
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   "failed to generate token",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, LoginResponse{
+		Response: Response{
+			Success: true,
+		},
+		Token: tokenString,
 	})
 
 }
