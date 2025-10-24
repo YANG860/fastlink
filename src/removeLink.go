@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func removeLink(ctx *gin.Context) {
+func removeLink(ctx *gin.Context, url string) {
 	var body RemoveLinkRequest
 	err := ctx.BindJSON(&body)
 	if err != nil {
@@ -19,8 +19,9 @@ func removeLink(ctx *gin.Context) {
 		ctx.JSON(401, RemoveLinkResponse{Response: Response{Success: false, Error: "Invalid token"}})
 		return
 	}
+
 	var link Link
-	has, err := engine.Where("short_url=?", body.Url).Get(&link)
+	has, err := engine.Where("short_url=?", url).Get(&link)
 	if err != nil {
 		ctx.JSON(500, RemoveLinkResponse{Response: Response{Success: false, Error: "Database error"}})
 		return
@@ -29,7 +30,6 @@ func removeLink(ctx *gin.Context) {
 		ctx.JSON(404, RemoveLinkResponse{Response: Response{Success: false, Error: "Link not found"}})
 		return
 	}
-
 
 	_, err = engine.ID(link.ID).Update(&Link{ExpireAt: time.Now().Add(-time.Hour)})
 	if err != nil {

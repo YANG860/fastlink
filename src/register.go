@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -10,7 +8,7 @@ import (
 func register(ctx *gin.Context) {
 	var body LoginRequest
 	if err := ctx.BindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   "Invalid request",
 		})
@@ -20,7 +18,7 @@ func register(ctx *gin.Context) {
 	has, err := engine.Where("account = ?", body.Account).Exist(&User{})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   err.Error(),
 		})
@@ -29,7 +27,7 @@ func register(ctx *gin.Context) {
 	}
 
 	if has {
-		ctx.JSON(http.StatusBadRequest, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   "account already exists",
 		})
@@ -38,7 +36,7 @@ func register(ctx *gin.Context) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.PW), bcrypt.DefaultCost)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   "failed to hash password",
 		})
@@ -47,14 +45,14 @@ func register(ctx *gin.Context) {
 
 	_, err = engine.InsertOne(&User{Account: body.Account, PwHash: string(hashedPassword), Valid: true})
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   err.Error(),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Response{
+	ctx.JSON(200, Response{
 		Success: true,
 	})
 

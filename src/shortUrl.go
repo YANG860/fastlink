@@ -3,22 +3,22 @@ package main
 import (
 	"math/rand/v2"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"xorm.io/xorm"
 )
 
-var letter string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+="
-var length int = 5
+func genRandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+="
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.IntN(len(letters))]
+	}
+	return string(b)
+}
 
 func getShortUrl(ctx *gin.Context) {
-
-	s := strings.Builder{}
-	for i := 0; i < length; i++ {
-		s.WriteByte(letter[rand.IntN(len(letter))])
-	}
 
 	var body ShortUrlRequest
 	err := ctx.BindJSON(&body)
@@ -49,17 +49,20 @@ func getShortUrl(ctx *gin.Context) {
 		return
 	}
 
-	if time.Now().After(token.ExpiresAt.Time) {
-		ctx.JSON(401, Response{Success: false, Error: "Invalid token"})
-		return
-	}
-
 	if !checkUrl(body.Source) {
 		if !checkUrl("https://" + body.Source) {
 			ctx.JSON(400, Response{Success: false, Error: "Invalid source url"})
 			return
 		}
 		body.Source = "https://" + body.Source
+	}
+	s := genRandomString(6)
+	for has, err := engine.Exist(&Link{ShortUrl: s}); has; {
+		if err != nil {
+			ctx.JSON(500, Response{Success: false, Error: "Database error"})
+			return
+		}
+		s = genRandomString(6)
 	}
 
 	var user User
@@ -73,7 +76,7 @@ func getShortUrl(ctx *gin.Context) {
 
 		_, err := tx.InsertOne(&Link{
 			SourceUrl: body.Source,
-			ShortUrl:  s.String(),
+			ShortUrl:  s,
 			UserID:    user.ID,
 
 			ExpireAt: time.Now().Add(time.Hour * 24 * 7),
@@ -103,7 +106,7 @@ func getShortUrl(ctx *gin.Context) {
 		Response: Response{
 			Success: true,
 		},
-		Url: s.String(),
+		Url: s,
 	})
 
 }

@@ -1,8 +1,6 @@
-// 登录相关主程序
 package main
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +14,7 @@ func login(ctx *gin.Context) {
 	err := ctx.BindJSON(&body)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   err.Error(),
 		})
@@ -26,7 +24,7 @@ func login(ctx *gin.Context) {
 	var user User
 	has, err := engine.Where("account = ?", body.Account).Get(&user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   err.Error(),
 		})
@@ -34,7 +32,7 @@ func login(ctx *gin.Context) {
 	}
 
 	if !has {
-		ctx.JSON(http.StatusUnauthorized, Response{
+		ctx.JSON(401, Response{
 			Success: false,
 			Error:   "incorrect account or password",
 		})
@@ -42,7 +40,7 @@ func login(ctx *gin.Context) {
 	}
 
 	if !user.Valid {
-		ctx.JSON(http.StatusUnauthorized, Response{
+		ctx.JSON(401, Response{
 			Success: false,
 			Error:   "user is not valid",
 		})
@@ -51,7 +49,7 @@ func login(ctx *gin.Context) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PwHash), []byte(body.PW))
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, Response{
+		ctx.JSON(401, Response{
 			Success: false,
 			Error:   "incorrect account or password",
 		})
@@ -59,20 +57,21 @@ func login(ctx *gin.Context) {
 	}
 
 	tokenString, err := GenJWT(&UserToken{
-		ID: user.ID,
+		ID:      user.ID,
+		Account: user.Account,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
 		}})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Response{
+		ctx.JSON(500, Response{
 			Success: false,
 			Error:   "failed to generate token",
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, LoginResponse{
+	ctx.JSON(200, LoginResponse{
 		Response: Response{
 			Success: true,
 		},

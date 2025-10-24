@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +31,6 @@ func redirect(ctx *gin.Context, short string) {
 		return
 	}
 
-	ctx.Redirect(http.StatusPermanentRedirect, link.SourceUrl)
+	ctx.Redirect(301, link.SourceUrl)
 
 }

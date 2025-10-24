@@ -2,19 +2,23 @@ package main
 
 import "github.com/gin-gonic/gin"
 
-func removeUser(ctx *gin.Context) {
+func removeUser(ctx *gin.Context, account string) {
 
 	var body RemoveUserRequest
 	err := ctx.BindJSON(&body)
 	if err != nil {
 		ctx.JSON(400, RemoveUserResponse{Response: Response{Success: false, Error: "Invalid request"}})
 		return
-
 	}
 
 	userToken, err := ParseJWT(body.Token)
 	if err != nil {
 		ctx.JSON(401, RemoveUserResponse{Response: Response{Success: false, Error: "Invalid token"}})
+		return
+	}
+
+	if userToken.Account != account {
+		ctx.JSON(403, RemoveUserResponse{Response: Response{Success: false, Error: "Forbidden"}})
 		return
 	}
 

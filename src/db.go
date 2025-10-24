@@ -31,18 +31,25 @@ type Link struct {
 	ExpireAt   time.Time `xorm:"'expire_at'       notnull"`
 }
 
-func init() {
-	var err error
-	engine, err = xorm.NewEngine("mysql", "root:2470@tcp(81.70.152.142:9000)/shortener_db")
+func ConnectDB(dsn string) (*xorm.Engine, error) {
+	engine, err := xorm.NewEngine("mysql", dsn)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	err = engine.Ping()
-	if err != nil {
-		panic(err)
+	if err := engine.Ping(); err != nil {
+		return nil, err
 	}
-	fmt.Println("success!!!")
+	if err := engine.Sync2(&User{}, &Link{}); err != nil {
+		return nil, err
+	}
+	return engine, nil
+}
 
-	engine.Sync2(&User{})
-	engine.Sync2(&Link{})
+
+func init() {
+	_, err := ConnectDB("root:2470@tcp(81.70.152.142:9000)/shortener_db")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Database connected")
 }

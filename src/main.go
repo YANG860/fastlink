@@ -8,44 +8,55 @@ import (
 
 var totalQuery uint64 = 0
 
+func queryCounterMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		atomic.AddUint64(&totalQuery, 1)
+		ctx.Next()
+	}
+}
+
 func main() {
 	router := gin.Default()
+	router.Use(queryCounterMiddleware())
 
-	router.POST("/register", func(ctx *gin.Context) {
-		register(ctx)
-		atomic.AddUint64(&totalQuery, 1)
+	router.GET("/link/:url", func(ctx *gin.Context) {
+		url := ctx.Param("url")
+		getLink(ctx, url)
 	})
-
-	router.POST("/login", func(ctx *gin.Context) {
-		login(ctx)
-		atomic.AddUint64(&totalQuery, 1)
+	router.DELETE("/link/:url", func(ctx *gin.Context) {
+		url := ctx.Param("url")
+		removeLink(ctx, url)
 	})
-
-	router.POST("/new", func(ctx *gin.Context) {
+	router.POST("/link/new", func(ctx *gin.Context) {
 		getShortUrl(ctx)
-		atomic.AddUint64(&totalQuery, 1)
 	})
+
+
+	router.GET("/user/:account", func(ctx *gin.Context) {
+		account := ctx.Param("account")
+		getUser(ctx, account)
+	})
+	router.DELETE("/user/:account", func(ctx *gin.Context) {
+		account := ctx.Param("account")
+		removeUser(ctx, account)
+	})
+
+	router.POST("/user/register", func(ctx *gin.Context) {
+		register(ctx)
+	})
+
+	router.POST("/user/login", func(ctx *gin.Context) {
+		login(ctx)
+	})
+
+	
 
 	router.GET("/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
 		redirect(ctx, url)
-
-		atomic.AddUint64(&totalQuery, 1)
 	})
 
 	//router group for rm user and link
-
-	removeGroup := router.Group("/remove")
-
-	removeGroup.POST("/user", func(ctx *gin.Context) {
-		removeUser(ctx)
-		atomic.AddUint64(&totalQuery, 1)
-	})
-
-	removeGroup.POST("/link", func(ctx *gin.Context) {
-		removeLink(ctx)
-		atomic.AddUint64(&totalQuery, 1)
-	})
 
 	go statQps()
 

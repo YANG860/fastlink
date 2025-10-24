@@ -16,7 +16,8 @@ func GenJWT(user *UserToken) (string, error) {
 
 func ParseJWT(tokenString string) (*UserToken, error) {
 
-	rawToken, err := jwt.ParseWithClaims(tokenString, &UserToken{}, func(token *jwt.Token) (interface{}, error) {
+	claims := &UserToken{}
+	rawToken, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
 	})
 
