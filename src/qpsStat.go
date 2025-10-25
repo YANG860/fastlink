@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// statQps 定时统计并打印 QPS
 func statQps() {
 	var lastCount uint64 = 0
 	for {

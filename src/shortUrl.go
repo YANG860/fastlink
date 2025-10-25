@@ -9,6 +9,7 @@ import (
 	"xorm.io/xorm"
 )
 
+// genRandomString 生成指定长度的随机字符串
 func genRandomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+="
 	b := make([]byte, n)
@@ -18,15 +19,18 @@ func genRandomString(n int) string {
 	return string(b)
 }
 
+// getShortUrl 生成短链，需验证 token 和原始链接有效性
 func getShortUrl(ctx *gin.Context) {
 
 	var body ShortUrlRequest
+	// 解析请求体
 	err := ctx.BindJSON(&body)
 	if err != nil {
 		ctx.JSON(400, Response{Success: false, Error: "Invalid request"})
 		return
 	}
 
+	// 获取 token（优先请求体，否则 cookie）
 	if body.Token == "" {
 		cookieToken, err := ctx.Cookie("token")
 		if err != nil {
@@ -42,6 +46,7 @@ func getShortUrl(ctx *gin.Context) {
 		body.Token = cookieToken
 	}
 
+	// 校验 token
 	token, err := ParseJWT(body.Token)
 
 	if err != nil {
@@ -49,6 +54,7 @@ func getShortUrl(ctx *gin.Context) {
 		return
 	}
 
+	// 校验原始链接格式
 	if !checkUrl(body.Source) {
 		if !checkUrl("https://" + body.Source) {
 			ctx.JSON(400, Response{Success: false, Error: "Invalid source url"})
@@ -56,6 +62,7 @@ func getShortUrl(ctx *gin.Context) {
 		}
 		body.Source = "https://" + body.Source
 	}
+	// 生成唯一短链
 	s := genRandomString(6)
 	for has, err := engine.Exist(&Link{ShortUrl: s}); has; {
 		if err != nil {
@@ -72,6 +79,7 @@ func getShortUrl(ctx *gin.Context) {
 		return
 	}
 
+	// 事务：插入短链并更新用户信息
 	_, err = engine.Transaction(func(tx *xorm.Session) (interface{}, error) {
 
 		_, err := tx.InsertOne(&Link{
@@ -106,11 +114,12 @@ func getShortUrl(ctx *gin.Context) {
 		Response: Response{
 			Success: true,
 		},
-		Url: s,
+		ShortUrl: s,
 	})
 
 }
 
+// checkUrl 校验 URL 格式是否合法
 func checkUrl(raw string) bool {
 	u, err := url.Parse(raw)
 	if err != nil {

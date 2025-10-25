@@ -6,8 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 全局查询计数器
 var totalQuery uint64 = 0
 
+// 查询计数中间件，每次请求自增 totalQuery
 func queryCounterMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		atomic.AddUint64(&totalQuery, 1)
@@ -19,45 +21,44 @@ func main() {
 	router := gin.Default()
 	router.Use(queryCounterMiddleware())
 
-	router.GET("/link/:url", func(ctx *gin.Context) {
+	// 链接相关路由
+	router.GET("/links/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
 		getLink(ctx, url)
 	})
-	router.DELETE("/link/:url", func(ctx *gin.Context) {
+	router.DELETE("/links/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
 		removeLink(ctx, url)
 	})
-	router.POST("/link/new", func(ctx *gin.Context) {
+	router.POST("/links/new", func(ctx *gin.Context) {
 		getShortUrl(ctx)
 	})
 
-
-	router.GET("/user/:account", func(ctx *gin.Context) {
+	// 用户相关路由
+	router.GET("/users/:account", func(ctx *gin.Context) {
 		account := ctx.Param("account")
 		getUser(ctx, account)
 	})
-	router.DELETE("/user/:account", func(ctx *gin.Context) {
+	router.DELETE("/users/:account", func(ctx *gin.Context) {
 		account := ctx.Param("account")
 		removeUser(ctx, account)
 	})
 
-	router.POST("/user/register", func(ctx *gin.Context) {
+	router.POST("/users/register", func(ctx *gin.Context) {
 		register(ctx)
 	})
 
-	router.POST("/user/login", func(ctx *gin.Context) {
+	router.POST("/users/login", func(ctx *gin.Context) {
 		login(ctx)
 	})
 
-	
-
+	// 重定向路由
 	router.GET("/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
 		redirect(ctx, url)
 	})
 
-	//router group for rm user and link
-
+	// 启动 QPS 统计协程
 	go statQps()
 
 	router.Run()
