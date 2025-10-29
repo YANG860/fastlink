@@ -1,16 +1,13 @@
-package main
+package models
 
 import (
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWT 用户信息结构体
-type UserToken struct {
-	jwt.RegisteredClaims
-	ID      int    `json:"id"`
-	Account string `json:"account"`
+// 通用响应结构体
+type Response struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
 }
 
 // 登录请求结构体
@@ -25,10 +22,16 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-// 通用响应结构体
-type Response struct {
-	Success bool   `json:"success"`
-	Error   string `json:"error,omitempty"`
+// 注册请求结构体
+type RegisterRequest struct {
+	Account string `json:"account"`
+	PW      string `json:"pw"`
+}
+
+// 注册响应结构体
+type RegisterResponse struct {
+	Response
+	Token string `json:"token"`
 }
 
 // 短链生成请求结构体

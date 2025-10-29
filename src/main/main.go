@@ -1,18 +1,20 @@
 package main
 
 import (
+	"fastlink/auth"
+	"fastlink/internal"
+	"fastlink/internal/link"
+	"fastlink/internal/user"
+	"fastlink/utils"
 	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
 )
 
-// 全局查询计数器
-var totalQuery uint64 = 0
-
 // 查询计数中间件，每次请求自增 totalQuery
 func queryCounterMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		atomic.AddUint64(&totalQuery, 1)
+		atomic.AddUint64(&utils.TotalQuery, 1)
 		ctx.Next()
 	}
 }
@@ -24,42 +26,42 @@ func main() {
 	// 链接相关路由
 	router.GET("/links/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
-		getLink(ctx, url)
+		link.GetLink(ctx, url)
 	})
 	router.DELETE("/links/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
-		removeLink(ctx, url)
+		link.RemoveLink(ctx, url)
 	})
 	router.POST("/links/new", func(ctx *gin.Context) {
-		getShortUrl(ctx)
+		link.GetShortUrl(ctx)
 	})
 
 	// 用户相关路由
 	router.GET("/users/:account", func(ctx *gin.Context) {
 		account := ctx.Param("account")
-		getUser(ctx, account)
+		user.GetUser(ctx, account)
 	})
 	router.DELETE("/users/:account", func(ctx *gin.Context) {
 		account := ctx.Param("account")
-		removeUser(ctx, account)
+		user.RemoveUser(ctx, account)
 	})
 
 	router.POST("/users/register", func(ctx *gin.Context) {
-		register(ctx)
+		auth.Register(ctx)
 	})
 
 	router.POST("/users/login", func(ctx *gin.Context) {
-		login(ctx)
+		auth.Login(ctx)
 	})
 
 	// 重定向路由
 	router.GET("/:url", func(ctx *gin.Context) {
 		url := ctx.Param("url")
-		redirect(ctx, url)
+		internal.Redirect(ctx, url)
 	})
 
 	// 启动 QPS 统计协程
-	go statQps()
+	go utils.StatQps()
 
 	router.Run()
 }

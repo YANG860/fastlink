@@ -1,7 +1,9 @@
-package main
+package link
 
 import (
-	"math/rand/v2"
+	"fastlink/auth"
+	"fastlink/models"
+	"math/rand"
 	"net/url"
 	"time"
 
@@ -14,75 +16,60 @@ func genRandomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+="
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letters[rand.IntN(len(letters))]
+		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
 }
 
-// getShortUrl 生成短链，需验证 token 和原始链接有效性
-func getShortUrl(ctx *gin.Context) {
+// GetShortUrl 生成短链，需验证 token 和原始链接有效性
+func GetShortUrl(ctx *gin.Context) {
 
-	var body ShortUrlRequest
+	var body models.ShortUrlRequest
 	// 解析请求体
 	err := ctx.BindJSON(&body)
 	if err != nil {
-		ctx.JSON(400, Response{Success: false, Error: "Invalid request"})
+		ctx.JSON(400, models.InvalidRequestError)
 		return
 	}
-
-	// 获取 token（优先请求体，否则 cookie）
-	if body.Token == "" {
-		cookieToken, err := ctx.Cookie("token")
-		if err != nil {
-			ctx.JSON(400, Response{Success: false, Error: "Failed to retrieve token cookie"})
-			return
-		}
-
-		if cookieToken == "" {
-			ctx.JSON(401, Response{Success: false, Error: "No login"})
-			return
-		}
-
-		body.Token = cookieToken
-	}
+	
 
 	// 校验 token
-	token, err := ParseJWT(body.Token)
+	token, err := auth.ParseJWT(body.Token)
 
 	if err != nil {
-		ctx.JSON(401, Response{Success: false, Error: "Invalid token"})
+		ctx.JSON(401, models.InvalidTokenError)
 		return
 	}
 
 	// 校验原始链接格式
 	if !checkUrl(body.Source) {
 		if !checkUrl("https://" + body.Source) {
-			ctx.JSON(400, Response{Success: false, Error: "Invalid source url"})
+			ctx.JSON(400, models.InvalidRequestError)
 			return
 		}
 		body.Source = "https://" + body.Source
 	}
 	// 生成唯一短链
 	s := genRandomString(6)
-	for has, err := engine.Exist(&Link{ShortUrl: s}); has; {
+	for has, err := models.Engine.Exist(&models.Link{ShortUrl: s}); has; {
 		if err != nil {
-			ctx.JSON(500, Response{Success: false, Error: "Database error"})
+			ctx.JSON(500, models.DatabaseError)
 			return
 		}
 		s = genRandomString(6)
 	}
 
-	var user User
-	engine.ID(token.ID).Get(&user)
+	var user models.User
+	models.Engine.ID(token.ID).Get(&user)
 	if !user.Valid {
-		ctx.JSON(401, Response{Success: false, Error: "Invalid user"})
+		ctx.JSON(401, models.InvalidTokenError)
 		return
 	}
 
 	// 事务：插入短链并更新用户信息
-	_, err = engine.Transaction(func(tx *xorm.Session) (interface{}, error) {
+	_, err = models.Engine.Transaction(func(tx *xorm.Session) (interface{}, error) {
 
-		_, err := tx.InsertOne(&Link{
+		_, err := tx.InsertOne(&models.Link{
 			SourceUrl: body.Source,
 			ShortUrl:  s,
 			UserID:    user.ID,
@@ -106,14 +93,12 @@ func getShortUrl(ctx *gin.Context) {
 	})
 
 	if err != nil {
-		ctx.JSON(500, Response{Success: false, Error: "Database error"})
+		ctx.JSON(500, models.DatabaseError)
 		return
 	}
 
-	ctx.JSON(200, ShortUrlResponse{
-		Response: Response{
-			Success: true,
-		},
+	ctx.JSON(200, models.ShortUrlResponse{
+		Response: models.Success,
 		ShortUrl: s,
 	})
 

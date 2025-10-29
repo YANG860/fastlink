@@ -2,11 +2,47 @@ add hot key cache
 
 session
 
+better api format
 
-get all link , user 
+add bloom filter to check if user,link  exists
+
+get all link , user , as admin
+
+ip based rate limits
+
+more middlewares 
+
 show all links from a user
 
 remove all links on removing user
+
+costimized short  url name
+
+url pre-generate and redis cache, speeding up
+
+QPS stat(advanced)
+
+user groups ,permission groups, admin groups
+
+fine-grained permission control
+
+backups 
+
+QRcode
+
+other rescorces
+
+clusters
+
+deployment
+
+more features (once click,...)  
+
+local cache
+
+log
+
+
 
 
 
