@@ -7,4 +7,5 @@ type UserToken struct {
 	jwt.RegisteredClaims
 	ID      int    `json:"id"`
 	Account string `json:"account"`
+	Version int    `json:"version"`
 }

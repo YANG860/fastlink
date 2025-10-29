@@ -1,8 +1,8 @@
 package user
 
-
 import (
 	"fastlink/auth"
+	"fastlink/db"
 	"fastlink/models"
 
 	"github.com/gin-gonic/gin"
@@ -32,9 +32,9 @@ func GetUser(ctx *gin.Context, account string) {
 		return
 	}
 
-	var user models.User
+	var user db.User
 	// 查询用户
-	has, err := models.Engine.ID(token.ID).Get(&user)
+	has, err := db.Engine.ID(token.ID).Get(&user)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

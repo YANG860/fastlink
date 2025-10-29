@@ -2,6 +2,7 @@ package link
 
 import (
 	"fastlink/auth"
+	"fastlink/db"
 	"fastlink/models"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ func GetLink(ctx *gin.Context, short string) {
 
 	var link models.Link
 	// 查询短链
-	has, err := models.Engine.Where("short_url=?", short).Get(&link)
+	has, err := db.Engine.Where("short_url=?", short).Get(&link)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

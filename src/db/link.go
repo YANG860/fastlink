@@ -1,18 +1,16 @@
-package models
+package db
 
-import "time"
-
+import "time"	
 // 链接表结构
 type Link struct {
 	ID         int       `xorm:"'link_id'         pk autoincr"`
-	SourceUrl  string    `xorm:"'source_url'      notnull"`
+	SourceUrl  string    `xorm:"'source_url'      "`
 	ShortUrl   string    `xorm:"'short_url'       index notnull unique"`
 	UserID     int       `xorm:"'user_id'         notnull"`
 	ClickCount int       `xorm:"'click_count'     default(0)"`
 	CreatedAt  time.Time `xorm:"'created_at'      created"`
 	ExpireAt   time.Time `xorm:"'expire_at'       notnull"`
 }
-
 func (l *Link) TableName() string {
 	return "link"
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fastlink/db"
 	"fastlink/models"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 // 3. 检查用户是否有效。
 // 4. 校验密码是否正确。
 // 5. 生成 JWT token 并返回给前端。
+
 func Login(ctx *gin.Context) {
 
 	var body models.LoginRequest
@@ -28,9 +30,9 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	var user models.User
+	var user db.User
 	// 根据账号从数据库查询用户
-	has, err := models.Engine.Where("account = ?", body.Account).Get(&user)
+	has, err := db.Engine.Where("account = ?", body.Account).Get(&user)
 	if err != nil {
 		// 查询数据库出错，返回 500 错误
 		ctx.JSON(500, models.DatabaseError)
@@ -61,6 +63,7 @@ func Login(ctx *gin.Context) {
 	tokenString, err := GenJWT(&UserToken{
 		ID:      user.ID,
 		Account: user.Account,
+		Version: user.TokenVersion + 1,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
 		}})
@@ -68,6 +71,20 @@ func Login(ctx *gin.Context) {
 	if err != nil {
 		// 生成 token 失败，返回 500 错误
 		ctx.JSON(500, models.InternalServerError)
+		return
+	}
+
+	//数据库version++
+	_, err = db.Engine.ID(user.ID).Cols("token_version").Update(&db.User{TokenVersion: user.TokenVersion + 1})
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
+		return
+	}
+
+	//redis 缓存 version++
+	err = db.SetVersionToCache(user.ID, user.TokenVersion + 1)
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
 		return
 	}
 
