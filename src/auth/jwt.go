@@ -51,7 +51,7 @@ func ParseJWT(tokenString string) (*UserToken, error) {
 
 		// 缓存未命中，回表查询
 		var user db.User
-		_, err := db.Engine.ID(token.ID).Get(&user)
+		_, err := db.SQLEngine.ID(token.ID).Get(&user)
 		if err != nil {
 			return nil, err
 		}

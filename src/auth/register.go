@@ -18,7 +18,7 @@ func Register(ctx *gin.Context) {
 	}
 
 	// 检查账号是否已存在
-	has, err := db.Engine.Where("account = ?", body.Account).Exist(&db.User{})
+	has, err := db.SQLEngine.Where("account = ?", body.Account).Exist(&db.User{})
 
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
@@ -38,7 +38,7 @@ func Register(ctx *gin.Context) {
 	}
 
 	// 插入新用户
-	_, err = db.Engine.InsertOne(&db.User{Account: body.Account, PwHash: string(hashedPassword), Valid: true})
+	_, err = db.SQLEngine.InsertOne(&db.User{Account: body.Account, PwHash: string(hashedPassword), Valid: true})
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

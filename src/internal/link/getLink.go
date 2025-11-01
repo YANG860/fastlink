@@ -19,9 +19,9 @@ func GetLink(ctx *gin.Context, short string) {
 		return
 	}
 
-	var link models.Link
+	var link db.Link
 	// 查询短链
-	has, err := db.Engine.Where("short_url=?", short).Get(&link)
+	has, err := db.SQLEngine.Where("short_url=?", short).Get(&link)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

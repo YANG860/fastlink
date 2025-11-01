@@ -32,7 +32,7 @@ func Login(ctx *gin.Context) {
 
 	var user db.User
 	// 根据账号从数据库查询用户
-	has, err := db.Engine.Where("account = ?", body.Account).Get(&user)
+	has, err := db.SQLEngine.Where("account = ?", body.Account).Get(&user)
 	if err != nil {
 		// 查询数据库出错，返回 500 错误
 		ctx.JSON(500, models.DatabaseError)
@@ -75,14 +75,14 @@ func Login(ctx *gin.Context) {
 	}
 
 	//数据库version++
-	_, err = db.Engine.ID(user.ID).Cols("token_version").Update(&db.User{TokenVersion: user.TokenVersion + 1})
+	_, err = db.SQLEngine.ID(user.ID).Cols("token_version").Update(&db.User{TokenVersion: user.TokenVersion + 1})
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
 	}
 
 	//redis 缓存 version++
-	err = db.SetVersionToCache(user.ID, user.TokenVersion + 1)
+	err = db.SetVersionToCache(user.ID, user.TokenVersion+1)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

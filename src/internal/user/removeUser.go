@@ -34,7 +34,7 @@ func RemoveUser(ctx *gin.Context, account string) {
 	}
 
 	// 逻辑删除用户
-	_, err = db.Engine.ID(userToken.ID).Cols("valid").Update(&db.User{Valid: false})
+	_, err = db.SQLEngine.ID(userToken.ID).Cols("valid").Update(&db.User{Valid: false})
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
@@ -53,7 +53,7 @@ func RemoveUser(ctx *gin.Context, account string) {
 	}
 
 	//  数据库version++
-	_, err = db.Engine.ID(userToken.ID).Cols("token_version").Update(&db.User{TokenVersion: userToken.Version + 1})
+	_, err = db.SQLEngine.ID(userToken.ID).Cols("token_version").Update(&db.User{TokenVersion: userToken.Version + 1})
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

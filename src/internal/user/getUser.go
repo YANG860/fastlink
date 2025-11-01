@@ -34,7 +34,7 @@ func GetUser(ctx *gin.Context, account string) {
 
 	var user db.User
 	// 查询用户
-	has, err := db.Engine.ID(token.ID).Get(&user)
+	has, err := db.SQLEngine.ID(token.ID).Get(&user)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

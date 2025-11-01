@@ -28,7 +28,7 @@ func RemoveLink(ctx *gin.Context, url string) {
 
 	var link db.Link
 	// 查询短链
-	has, err := db.Engine.Where("short_url=?", url).Get(&link)
+	has, err := db.SQLEngine.Where("short_url=?", url).Get(&link)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
@@ -40,7 +40,7 @@ func RemoveLink(ctx *gin.Context, url string) {
 	}
 
 	// 逻辑删除（设置过期时间为过去）
-	_, err = db.Engine.ID(link.ID).Update(&db.Link{ExpireAt: time.Now().Add(-time.Minute)})
+	_, err = db.SQLEngine.ID(link.ID).Update(&db.Link{ExpireAt: time.Now().Add(-time.Minute)})
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return

@@ -23,7 +23,7 @@ func Redirect(ctx *gin.Context, shortUrl string) {
 	if err != nil {
 		// 缓存未命中，回表查询
 		var link db.Link
-		_, err := db.Engine.Where("short_url=?", shortUrl).Get(&link)
+		_, err := db.SQLEngine.Where("short_url=?", shortUrl).Get(&link)
 		if err != nil {
 			ctx.JSON(500, models.DatabaseError)
 			return
@@ -38,7 +38,7 @@ func Redirect(ctx *gin.Context, shortUrl string) {
 
 		//创建者是否有效
 		var user db.User
-		_, err = db.Engine.ID(link.UserID).Get(&user)
+		_, err = db.SQLEngine.ID(link.UserID).Get(&user)
 		if err != nil || !user.Valid {
 			ctx.JSON(404, models.NotFoundError)
 			db.RedisClient.Set(db.Ctx, "short_url:"+shortUrl+":source", "", 30*time.Minute)
@@ -78,12 +78,12 @@ func Redirect(ctx *gin.Context, shortUrl string) {
 	}
 
 	var link db.Link
-	_, err = db.Engine.ID(linkID).Get(&link)
+	_, err = db.SQLEngine.ID(linkID).Get(&link)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
 	}
-	db.Engine.ID(linkID).Update(&db.Link{
+	db.SQLEngine.ID(linkID).Update(&db.Link{
 		ClickCount: link.ClickCount + 1,
 	})
 

@@ -51,7 +51,7 @@ func GetShortUrl(ctx *gin.Context) {
 	}
 	// 生成唯一短链
 	s := genRandomString(6)
-	for has, err := db.Engine.Exist(&db.Link{ShortUrl: s}); has; {
+	for has, err := db.SQLEngine.Exist(&db.Link{ShortUrl: s}); has; {
 		if err != nil {
 			ctx.JSON(500, models.DatabaseError)
 			return
@@ -60,14 +60,14 @@ func GetShortUrl(ctx *gin.Context) {
 	}
 
 	var user db.User
-	db.Engine.ID(token.ID).Get(&user)
+	db.SQLEngine.ID(token.ID).Get(&user)
 	if !user.Valid {
 		ctx.JSON(401, models.InvalidTokenError)
 		return
 	}
 
 	// 事务：插入短链并更新用户信息
-	_, err = db.Engine.Transaction(func(tx *xorm.Session) (interface{}, error) {
+	_, err = db.SQLEngine.Transaction(func(tx *xorm.Session) (interface{}, error) {
 
 		_, err := tx.InsertOne(&db.Link{
 			SourceUrl: body.Source,

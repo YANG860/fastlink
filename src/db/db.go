@@ -10,22 +10,22 @@ import (
 )
 
 // 数据库引擎全局变量
-var Engine *xorm.Engine
+var SQLEngine *xorm.Engine
 var RedisClient *redis.Client
 var Ctx = context.Background()
 
 // 连接数据库并同步表结构
 func ConnectMysql(dsn string) error {
 	var err error
-	Engine, err = xorm.NewEngine("mysql", dsn)
+	SQLEngine, err = xorm.NewEngine("mysql", dsn)
 	if err != nil {
 		return err
 	}
-	if err := Engine.Ping(); err != nil {
+	if err := SQLEngine.Ping(); err != nil {
 		return err
 	}
 
-	if err := Engine.Sync2(&User{}, &Link{}); err != nil {
+	if err := SQLEngine.Sync2(&User{}, &Link{}); err != nil {
 		return err
 	}
 	return nil
@@ -48,6 +48,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 	err = ConnectRedis()
 	if err != nil {
 		panic(err)
