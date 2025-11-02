@@ -2,6 +2,7 @@ package main
 
 import (
 	"fastlink/auth"
+	"fastlink/config"
 	"fastlink/internal"
 	"fastlink/internal/link"
 	"fastlink/internal/user"
@@ -63,5 +64,5 @@ func main() {
 	// 启动 QPS 统计协程
 	go utils.StatQps()
 
-	router.Run()
+	router.Run(config.Global.Server.Port)
 }

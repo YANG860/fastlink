@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fastlink/config"
 	"fastlink/db"
 	"fastlink/models"
 	"time"
@@ -65,7 +66,7 @@ func Login(ctx *gin.Context) {
 		Account: user.Account,
 		Version: user.TokenVersion + 1,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour * time.Duration(config.Global.JWT.ExpireDays))),
 		}})
 
 	if err != nil {

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fastlink/config"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -15,9 +16,9 @@ var RedisClient *redis.Client
 var Ctx = context.Background()
 
 // 连接数据库并同步表结构
-func ConnectMysql(dsn string) error {
+func ConnectMysql() error {
 	var err error
-	SQLEngine, err = xorm.NewEngine("mysql", dsn)
+	SQLEngine, err = xorm.NewEngine("mysql", config.Global.Mysql.Dsn)
 	if err != nil {
 		return err
 	}
@@ -33,9 +34,9 @@ func ConnectMysql(dsn string) error {
 
 func ConnectRedis() error {
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "81.70.152.142:9001",
-		Password: "2470",
-		DB:       0,
+		Addr:     config.Global.Redis.Addr,
+		Password: config.Global.Redis.Password,
+		DB:       config.Global.Redis.DB,
 	})
 
 	_, err := RedisClient.Ping(Ctx).Result()
@@ -44,7 +45,7 @@ func ConnectRedis() error {
 
 // 初始化数据库连接
 func init() {
-	err := ConnectMysql("root:2470@tcp(81.70.152.142:9000)/shortener_db")
+	err := ConnectMysql()
 	if err != nil {
 		panic(err)
 	}

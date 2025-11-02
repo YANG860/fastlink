@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fastlink/config"
 	"fastlink/db"
 
 	"fmt"
@@ -9,7 +10,7 @@ import (
 )
 
 // JWT 密钥
-var secretKey string = "key"
+var secretKey string = config.Global.JWT.SecretKey
 
 // 生成 JWT token
 func GenJWT(user *UserToken) (string, error) {
