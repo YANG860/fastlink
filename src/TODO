@@ -1,12 +1,4 @@
-add hot key cache
-
-session
-
-better api format
-
 add bloom filter to check if user,link  exists
-
-get all link , user , as admin
 
 ip based rate limits
 
@@ -22,9 +14,11 @@ url pre-generate and redis cache, speeding up
 
 QPS stat(advanced)
 
+
 user groups ,permission groups, admin groups
 
 fine-grained permission control
+
 
 backups 
 

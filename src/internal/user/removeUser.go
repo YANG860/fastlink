@@ -10,6 +10,8 @@ import (
 )
 
 // removeUser 注销用户（逻辑删除），需验证 token 和权限
+// 并发一致性
+
 func RemoveUser(ctx *gin.Context, account string) {
 
 	var body models.RemoveUserRequest

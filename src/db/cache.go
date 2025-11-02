@@ -24,33 +24,22 @@ func SetVersionToCache(userID int, version int) error {
 	return err
 }
 
-func GetLinkSourceFromCache(shortUrl string) (string, error) {
-	source, err := RedisClient.Get(Ctx, "short_url:"+shortUrl+":source").Result()
+func GetLinkFromCache(shortUrl string) (*Link, error) {
+	var link Link
+	err := RedisClient.HGetAll(Ctx, "link:"+shortUrl).Scan(&link)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return source, nil
+	return &link, nil
 }
+
 
 func SetLinkToCache(link *Link) error {
 
-	err := RedisClient.Set(Ctx, "short_url:"+link.ShortUrl+":source", link.SourceUrl, 30*time.Minute).Err()
+	err := RedisClient.HSet(Ctx, "link:"+link.ShortUrl, link).Err()
 	if err != nil {
 		return err
 	}
 
-	err = RedisClient.Set(Ctx, "short_url:"+link.ShortUrl+":link_id", link.ID, 30*time.Minute).Err()
-	if err != nil {
-		return err
-	}
-	err = RedisClient.Set(Ctx, "short_url:"+link.ShortUrl+":expire_at", link.ExpireAt.Unix(), 30*time.Minute).Err()
-	if err != nil {
-		return err
-	}
-	err = RedisClient.Set(Ctx, "short_url:"+link.ShortUrl+":click_count", link.ClickCount, 30*time.Minute).Err()
-	if err != nil {
-		return err
-	}
 	return nil
 }

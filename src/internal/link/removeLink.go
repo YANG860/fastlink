@@ -3,8 +3,8 @@ package link
 import (
 	"fastlink/auth"
 	"fastlink/db"
+	"fastlink/internal/admin"
 	"fastlink/models"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,12 +39,5 @@ func RemoveLink(ctx *gin.Context, url string) {
 		return
 	}
 
-	// 逻辑删除（设置过期时间为过去）
-	_, err = db.SQLEngine.ID(link.ID).Update(&db.Link{ExpireAt: time.Now().Add(-time.Minute)})
-	if err != nil {
-		ctx.JSON(500, models.DatabaseError)
-		return
-	}
-
-	ctx.JSON(200, models.Success)
+	admin.RemoveLink(ctx, url)
 }

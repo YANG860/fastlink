@@ -4,14 +4,14 @@ import "time"
 
 // 用户表结构
 type User struct {
-	ID           int       `xorm:"'user_id'     pk  autoincr"`
-	RegisteredAt time.Time `xorm:"'created_at'  created"`
-	Account      string    `xorm:"'account'     notnull"`
-	PwHash       string    `xorm:"'pw_hash'     notnull"`
-	Valid        bool      `xorm:"'valid'       default(1) notnull"`
+	ID           int       `xorm:"'user_id'        pk  autoincr"`
+	RegisteredAt time.Time `xorm:"'created_at'     created"`
+	Account      string    `xorm:"'account'        notnull"`
+	PwHash       string    `xorm:"'pw_hash'        notnull"`
+	Valid        bool      `xorm:"'valid'          default(1) notnull"`
 	TokenVersion int       `xorm:"'token_version'  default(0) notnull"`
 
-	LinkCount       int       `xorm:"'link_count'      default(0)"`
+	LinkCount       int       `xorm:"'link_count'     default(0)"`
 	LatestCreatedAt time.Time `xorm:"'latest_created_at'"`
 }
 
