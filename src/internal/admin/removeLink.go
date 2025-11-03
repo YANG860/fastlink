@@ -32,10 +32,7 @@ func RemoveLink(ctx *gin.Context) {
 		ctx.JSON(500, models.DatabaseError)
 		return
 	}
-	if err != nil {
-		ctx.JSON(500, models.DatabaseError)
-		return
-	}
+
 
 	// 删除缓存
 	err = db.SetLinkToCache(&db.Link{ShortUrl: body.ShortUrl, ExpireAt: time.Now().Add(-time.Minute)})
