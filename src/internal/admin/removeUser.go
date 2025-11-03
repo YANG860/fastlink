@@ -7,9 +7,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RemoveUser(ctx *gin.Context, userID int) {
+func RemoveUser(ctx *gin.Context) {
+
+	var body models.RemoveUserAdminRequest
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(400, models.InvalidRequestError)
+		return
+	}
+
+	ok, err := db.AuthenticateAdmin(body.Admin.Account, body.Admin.PW)
+	if !ok {
+		ctx.JSON(403, models.ForbiddenError)
+		return
+	}
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
+		return
+	}
+
+	
 	// 逻辑删除用户
-	_, err := db.SQLEngine.ID(userID).Update(&db.User{Valid: true})
+	_, err = db.SQLEngine.ID(body.UserID).Update(&db.User{Valid: true})
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
@@ -17,11 +35,12 @@ func RemoveUser(ctx *gin.Context, userID int) {
 
 	// 获取该用户的所有短链
 	var links []db.Link
-	err = db.SQLEngine.Where("user_id = ?", userID).Find(&links)
+	err = db.SQLEngine.Where("user_id = ?", body.UserID).Find(&links)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
 	}
+
 
 	// 删除缓存
 	for _, link := range links {

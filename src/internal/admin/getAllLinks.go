@@ -20,6 +20,10 @@ func GetAllLinks(ctx *gin.Context) {
 		ctx.JSON(403, models.ForbiddenError)
 		return
 	}
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
+		return
+	}
 
 	var links []db.Link
 	err = db.SQLEngine.Find(&links)

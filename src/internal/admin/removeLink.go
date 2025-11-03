@@ -21,9 +21,17 @@ func RemoveLink(ctx *gin.Context) {
 		ctx.JSON(403, models.ForbiddenError)
 		return
 	}
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
+		return
+	}
 
 	// 逻辑删除短链（提前过期）
 	_, err = db.SQLEngine.Where("short_url = ?", body.ShortUrl).Update(&db.Link{ExpireAt: time.Now().Add(-time.Minute)})
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
+		return
+	}
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
