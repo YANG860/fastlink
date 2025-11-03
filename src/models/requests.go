@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fastlink/db"
 	"time"
 )
 
@@ -93,4 +94,65 @@ type GetLinkResponse struct {
 	CreatedAt  time.Time `json:"created_at"`
 	ExpireAt   time.Time `json:"expire_at"`
 	ClickCount int       `json:"click_count"`
+}
+
+type Admin struct {
+	Account string `json:"account"`
+	PW      string `json:"pw"`
+}
+
+// 获取所有短链请求结构体
+type GetAllLinksAdminRequest struct {
+	Admin
+}
+
+// 获取所有短链响应结构体
+type GetAllLinksAdminResponse struct {
+	Response
+	Links []db.Link `json:"links"`
+}
+
+// 删除短链请求结构体
+type RemoveLinkAdminRequest struct {
+	Admin
+	ShortUrl string `json:"short_url"`
+}
+
+// 删除短链响应结构体
+type RemoveLinkAdminResponse struct {
+	Response
+}
+
+// 获取某用户所有短链请求结构体
+type GetAllLinksByUserAdminRequest struct {
+	Admin
+	UserID int `json:"user_id"`
+}
+
+// 获取某用户所有短链响应结构体
+type GetAllLinksByUserAdminResponse struct {
+	Response
+	Links []db.Link `json:"links"`
+}
+
+// 获取所有用户请求结构体
+type GetAllUsersAdminRequest struct {
+	Admin
+}
+
+// 获取所有用户响应结构体
+type GetAllUsersAdminResponse struct {
+	Response
+	Users []db.User `json:"users"`
+}
+
+// 删除用户请求结构体
+type RemoveUserAdminRequest struct {
+	Admin
+	UserID int `json:"user_id"`
+}
+
+// 删除用户响应结构体
+type RemoveUserAdminResponse struct {
+	Response
 }

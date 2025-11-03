@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetAllLinks(ctx *gin.Context) {
-	// 获取所有短链
-	var body models.GetAllLinksAdminRequest
+func GetAllLinksByUser(ctx *gin.Context) {
+
+	var body models.GetAllLinksByUserAdminRequest
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, models.InvalidRequestError)
 		return
@@ -21,15 +21,16 @@ func GetAllLinks(ctx *gin.Context) {
 		return
 	}
 
+	// 获取所有短链
 	var links []db.Link
-	err = db.SQLEngine.Find(&links)
+	err = db.SQLEngine.Where("user_id = ?", body.UserID).Find(&links)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
 	}
 
 	// 返回短链列表
-	ctx.JSON(200, models.GetAllLinksAdminResponse{
+	ctx.JSON(200, models.GetAllLinksByUserAdminResponse{
 		Response: models.Success,
 		Links:    links,
 	})

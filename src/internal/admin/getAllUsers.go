@@ -8,14 +8,30 @@ import (
 )
 
 func GetAllUsers(ctx *gin.Context) {
+
+	var body models.GetAllUsersAdminRequest
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(400, models.InvalidRequestError)
+		return
+	}
+
+	ok, err := db.AuthenticateAdmin(body.Admin.Account, body.Admin.PW)
+	if !ok {
+		ctx.JSON(403, models.ForbiddenError)
+		return
+	}
+
 	// 获取所有用户
 	var users []db.User
-	err := db.SQLEngine.Find(&users)
+	err = db.SQLEngine.Find(&users)
 	if err != nil {
 		ctx.JSON(500, models.DatabaseError)
 		return
 	}
 
 	// 返回用户列表
-	ctx.JSON(200, users)
+	ctx.JSON(200, models.GetAllUsersAdminResponse{
+		Response: models.Success,
+		Users:    users,
+	})
 }

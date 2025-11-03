@@ -4,10 +4,6 @@ ip based rate limits
 
 more middlewares 
 
-show all links from a user
-
-remove all links on removing user
-
 costimized short  url name
 
 url pre-generate and redis cache, speeding up

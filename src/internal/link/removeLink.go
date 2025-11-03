@@ -3,8 +3,8 @@ package link
 import (
 	"fastlink/auth"
 	"fastlink/db"
-	"fastlink/internal/admin"
 	"fastlink/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,5 +39,18 @@ func RemoveLink(ctx *gin.Context, url string) {
 		return
 	}
 
-	admin.RemoveLink(ctx, url)
+	_, err = db.SQLEngine.Where("short_url = ?", url).Update(&db.Link{ExpireAt: time.Now().Add(-time.Minute)})
+	if err != nil {
+		ctx.JSON(500, models.DatabaseError)
+		return
+	}
+
+	// 删除缓存
+	err = db.SetLinkToCache(&db.Link{ShortUrl: url, ExpireAt: time.Now().Add(-time.Minute)})
+	if err != nil {
+		ctx.JSON(500, models.InternalServerError)
+		return
+	}
+
+	ctx.JSON(200, models.Success)
 }
